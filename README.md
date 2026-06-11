@@ -91,22 +91,44 @@ modo que el proyecto firma en lnet **sin manejar claves privadas locales**.
 ### Crear la clave
 
 KMS soporta secp256k1 (la curva de Ethereum) con el algoritmo
-`EC_SIGN_SECP256K1_SHA256`:
+`EC_SIGN_SECP256K1_SHA256`. **Importante:** secp256k1 es **HSM-only** — no existe
+a nivel de protección `SOFTWARE` y la `location` debe ser una **región con
+Cloud HSM** (no `global`).
 
 ```bash
-gcloud kms keyrings create lnet-keyring --location=global
+gcloud kms keyrings create lnet-prod --location=us-east1   # región con Cloud HSM
 
 gcloud kms keys create lnet-signer \
-  --location=global \
-  --keyring=lnet-keyring \
+  --location=us-east1 \
+  --keyring=lnet-prod \
   --purpose=asymmetric-signing \
-  --default-algorithm=ec-sign-secp256k1-sha256
+  --default-algorithm=ec-sign-secp256k1-sha256 \
+  --protection-level=hsm
 
 # La service account necesita firmar y leer la clave pública:
 gcloud kms keys add-iam-policy-binding lnet-signer \
-  --location=global --keyring=lnet-keyring \
+  --location=us-east1 --keyring=lnet-prod \
   --member="serviceAccount:tu-sa@tu-proyecto.iam.gserviceaccount.com" \
   --role="roles/cloudkms.signerVerifier"
+```
+
+### Producción
+
+Para aprovisionar todo de una y obtener la address Ethereum de la clave, usa el
+script idempotente:
+
+```bash
+PROJECT=mi-proyecto \
+SA_EMAIL=signer@mi-proyecto.iam.gserviceaccount.com \
+LOCATION=us-east1 \
+  ./scripts/setup-kms.sh
+```
+
+Luego copia `.env.production.example` a `.env`, completa los valores (el
+`trustedForwarder` ya viene en mainnet) y valida:
+
+```bash
+npm run check    # imprime la address de la clave y la coteja con DEPLOYER_ADDRESS
 ```
 
 > **Cómo funciona la firma.** KMS no rehashea ni firma la tx completa (a
