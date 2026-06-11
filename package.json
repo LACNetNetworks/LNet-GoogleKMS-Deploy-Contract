@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "check": "hardhat check-deployer --network lnet",
+    "smoke": "hardhat check-deployer --network lnet && hardhat test",
     "deploy": "hardhat deploy-storage --network lnet",
     "test": "hardhat test"
   },

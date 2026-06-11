@@ -129,7 +129,12 @@ Luego copia `.env.production.example` a `.env`, completa los valores (el
 
 ```bash
 npm run check    # imprime la address de la clave y la coteja con DEPLOYER_ADDRESS
+npm run smoke    # check-deployer + test de firma contra KMS, sin enviar nada a la red
 ```
+
+`smoke` ejercita la ruta completa de firma con KMS (IAM, clave, recuperación de
+la address, gas model, low-s) **sin gastar gas** — corrélo antes de cualquier
+deploy on-chain.
 
 > **Cómo funciona la firma.** KMS no rehashea ni firma la tx completa (a
 > diferencia del plugin `ethsign` de OpenBao): sólo firma un **digest de 32
